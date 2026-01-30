@@ -1,0 +1,6 @@
+aws_region  = "us-east-1"
+ubuntu_ami  = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS
+windows_ami = "ami-0f9c44e98edf38a2b" # Windows Server 2022 Base
+kali_ami    = "ami-0fda60cefcfc43fc3" # Kali Linux (check AWS Marketplace)
+key_name    = "your-key-pair-name"
+allowed_ip  = "YOUR_PUBLIC_IP/32"
