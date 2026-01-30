@@ -1,0 +1,4 @@
+<!-- Custom Decoder for Detection Engineering Lab -->
+<decoder name="custom-app-decoder">
+  <prematch>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} CustomApp: </prematch>
+</decoder>

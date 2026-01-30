@@ -1,0 +1,16 @@
+<group name="windows, powershell,">
+  <rule id="100001" level="5">
+    <if_sid>60009</if_sid> <!-- Inherit from Windows Sysmon or PowerShell base rule, typically 600xx for Sysmon in Wazuh default ruleset, but user custom rules usually start 100000+ -->
+    <!-- Logic: process.command_line : powershell* and process.parent.command_line : *bat* and process.parent.name: cmd.exe -->
+    <!-- Sysmon Event ID 1 is Process Creation -->
+    <field name="win.eventdata.image">powershell.exe</field>
+    <field name="win.eventdata.parentImage">cmd.exe</field>
+    <field name="win.eventdata.parentCommandLine" type="pcre2">(?i)\.bat</field>
+    <description>PowerShell Execution via a BAT File</description>
+    <mitre>
+      <id>T1059.001</id> <!-- PowerShell -->
+      <id>T1059</id> <!-- Command and Scripting Interpreter -->
+    </mitre>
+    <options>no_full_log</options>
+  </rule>
+</group>
