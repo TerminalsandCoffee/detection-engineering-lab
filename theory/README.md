@@ -8,15 +8,15 @@ Documentation on detection engineering concepts and methodologies.
 |----------|-------------|
 | [Security Operations](security-operations.md) | Overview of SecOps functions and how detection engineering fits |
 | [Detection Engineering Workflow](detection-engineering-workflow.md) | End-to-end process for creating and maintaining detections |
-| [Frameworks](frameworks.md) | MITRE ATT&CK, Cyber Kill Chain, and F3EAD frameworks |
+| [Frameworks](frameworks.md) | MITRE ATT&CK, Cyber Kill Chain, F3EAD, and modern standards |
 
 ## Key Concepts
 
 - **Detection Engineering**: The practice of designing, building, and maintaining threat detection logic
 - **Detection as Code**: Treating detections as software artifacts with version control, testing, and CI/CD
 - **MITRE ATT&CK Mapping**: Aligning detections to adversary tactics, techniques, and procedures (TTPs)
+- **Defensive Standards**: Using D3FEND, Sigma, and schema normalization to improve detection portability
 - **Alert Tuning**: Iterative process of reducing false positives while maintaining detection coverage
 
 <img width="590" height="352" alt="image" src="https://github.com/user-attachments/assets/824fc5d6-3024-4685-a9aa-46f0b0956b1c" />
-
 

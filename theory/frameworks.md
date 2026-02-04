@@ -1,6 +1,6 @@
 # Frameworks
 
-Security frameworks provide structured models for understanding adversary behavior and organizing defensive operations. The three frameworks below are commonly used in detection engineering to prioritize coverage, map detections to real-world threats, and drive intelligence-led operations.
+Security frameworks provide structured models for understanding adversary behavior and organizing defensive operations. The frameworks below are commonly used in detection engineering to prioritize coverage, map detections to real-world threats, and drive intelligence-led operations.
 
 ## The Cyber Kill Chain
 
@@ -82,6 +82,17 @@ ATT&CK provides separate matrices for different platforms:
 
 Most detections in this repo target the Enterprise matrix, specifically Windows endpoint telemetry.
 
+## MITRE D3FEND
+
+**MITRE D3FEND** is a complementary knowledge base focused on defensive techniques. While ATT&CK describes adversary behavior, D3FEND describes defensive countermeasures and the artifacts they produce.
+
+In detection engineering, D3FEND helps answer:
+- **What defensive telemetry should exist** (e.g., process creation, file monitoring, network analytics)
+- **Which mitigations enable stronger detections** (e.g., enabling PowerShell logging to improve visibility)
+- **How to align detections to defensive outcomes** instead of only adversary actions
+
+Pairing ATT&CK with D3FEND keeps detections grounded in what can be observed and instrumented in real environments.
+
 ## F3EAD
 
 <img width="486" height="514" alt="image" src="https://github.com/user-attachments/assets/7d7239d0-4aeb-47a5-8683-9c99c8103134" />
@@ -111,6 +122,17 @@ The F3EAD cycle connects directly to the detection engineering workflow:
 
 F3EAD is particularly useful for teams that want a tighter integration between threat intelligence and detection engineering, ensuring that intelligence outputs are always actionable and that detection outputs feed back into intelligence.
 
+## Additional Standards Used in Modern Programs
+
+These are commonly used alongside the frameworks above to improve portability and testability:
+
+| Standard | Purpose | Example Use |
+|----------|---------|-------------|
+| Sigma | Platform-agnostic detection rules | Translate TOML rules to a portable Sigma equivalent |
+| MITRE CAR | Curated analytics patterns | Seed detection ideas and validate logic |
+| DeTT&CT | Coverage assessment | Measure detection coverage against ATT&CK techniques |
+| OCSF / ECS | Schema normalization | Keep detection queries portable across data sources |
+
 ## Choosing a Framework
 
 These frameworks are complementary, not competing:
@@ -119,6 +141,7 @@ These frameworks are complementary, not competing:
 |-----------|----------|-------------|
 | Cyber Kill Chain | Visualizing detection coverage across intrusion stages | High-level (7 stages) |
 | MITRE ATT&CK | Mapping detections to specific adversary behaviors | Granular (hundreds of techniques) |
+| MITRE D3FEND | Mapping defensive techniques and required telemetry | Defensive technique catalog |
 | F3EAD | Driving intelligence-led detection operations | Process-oriented (6 phases) |
 
-A mature detection engineering program uses all three: the **kill chain** for strategic coverage planning, **ATT&CK** for tactical detection mapping, and **F3EAD** for operational workflow between intelligence and engineering teams.
+A mature detection engineering program uses multiple lenses: the **kill chain** for strategic coverage planning, **ATT&CK** for tactical detection mapping, **D3FEND** for telemetry and defensive controls, and **F3EAD** for operational workflow between intelligence and engineering teams.

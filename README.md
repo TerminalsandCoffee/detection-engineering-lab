@@ -11,17 +11,23 @@ This repository contains custom security detection rules designed to identify ma
 
 Detection Engineering is a critical component of Security Operations that:
 - Creates custom alerts for Incident Response teams
-- Develops unit tests to confirm working detections & capabilities
+- Develops tests to confirm working detections & capabilities (unit, replay, and emulation-based)
 - Bridges the gap between threat intelligence and actionable security monitoring
+
+Modern detection programs also emphasize:
+- **Detection-as-code** practices (versioning, CI validation, peer review)
+- **Schema normalization** (ECS, OCSF, or equivalent) to keep rules portable
+- **Threat emulation coverage** (Atomic Red Team, CALDERA) to validate logic
+- **Telemetry quality** (field completeness, logging policy, and data drift monitoring)
 
 ## Repository Structure
 
 ```
-detection-engineering/
+detection-engineering-lab/
 ├── detections/          # TOML-formatted detection rules
 ├── development/         # Python scripts for validation and conversion
 ├── metrics/             # Generated metrics, reports, and visualizations
-├── theory/             # Documentation on detection engineering concepts
+├── theory/              # Documentation on detection engineering concepts
 └── .github/workflows/   # GitHub Actions workflows (currently disabled)
 ```
 
@@ -70,9 +76,11 @@ Explore detection engineering concepts in the `theory/` directory:
 - Valid TOML syntax
 - All required fields present
 - Valid MITRE ATT&CK technique/tactic mappings
+- Sub-techniques included when applicable
 - Unique `rule_id` (UUID format)
 - Descriptive `name` and `description`
 - Appropriate `risk_score` and `severity`
+- Documented data sources and assumptions (what logs/fields the rule relies on)
 
 ## License
 
@@ -83,7 +91,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
 - [Elastic Security Detection Rules](https://www.elastic.co/guide/en/security/current/detection-engine-overview.html)
 - [Detection Engineering Best Practices](https://github.com/DetectionEngineering)
-
 
 
 
