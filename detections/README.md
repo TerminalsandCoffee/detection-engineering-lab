@@ -6,7 +6,8 @@ TOML-formatted detection rules for Elastic Security, mapped to the MITRE ATT&CK 
 
 Each detection file contains:
 - **metadata**: Creation date and versioning info
-- **rule**: Detection logic including query, severity, and MITRE mappings
+- **rule**: Detection logic including query, severity, and MITRE mappings (including sub-techniques when applicable)
+- **assumptions**: The data sources and field mappings the rule expects (documented in the rule description or metadata)
 
 ## Current Detections
 
@@ -29,3 +30,4 @@ Each detection file contains:
 2. Ensure valid MITRE ATT&CK mappings
 3. Run `python development/validation.py` to validate
 4. Run `python development/mitre.py` to verify MITRE mappings
+5. (Optional) Validate with emulation tooling (Atomic Red Team or CALDERA) to confirm coverage of technique variations
