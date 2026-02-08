@@ -1,6 +1,6 @@
 # Setup
 
-Infrastructure and environment setup for the detection engineering lab.
+Infrastructure and environment setup for the Threat Detection Lab.
 
 ## Contents
 

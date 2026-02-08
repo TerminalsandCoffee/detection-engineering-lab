@@ -1,18 +1,19 @@
-# Detection Engineering Fundamentals
+# Threat Detection Lab
 
-A comprehensive repository for creating, managing, and validating security detection rules in TOML format, mapped to the MITRE ATT&CK framework. Brought to you by Terminals and Coffee. 
+A hands-on lab for building, deploying, and validating threat detection rules using Wazuh SIEM — complete with Terraform-deployed attack/defend infrastructure and MITRE ATT&CK mappings.
 
 <img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/a3e85dd0-7987-43a5-926d-7b778484dc9c" />
 
 
 ## Overview
 
-This repository contains custom security detection rules designed to identify malicious activity across enterprise environments. Each detection is structured in TOML format and includes metadata, query logic, risk scoring, and MITRE ATT&CK framework mappings.
+This repository is a full detection engineering lab environment. It includes TOML-formatted detection rules, a Terraform-deployed Wazuh SIEM with Windows targets and Kali attacker, and Python tooling for validation, reporting, and CI/CD.
 
-Detection Engineering is a critical component of Security Operations that:
-- Creates custom alerts for Incident Response teams
-- Develops tests to confirm working detections & capabilities (unit, replay, and emulation-based)
-- Bridges the gap between threat intelligence and actionable security monitoring
+What you get:
+- **Detection rules** mapped to MITRE ATT&CK tactics and techniques
+- **Lab infrastructure** (Wazuh Manager + Windows Server + Kali Linux) deployed via Terraform on AWS
+- **Development tooling** for validation, MITRE mapping checks, and metrics generation
+- **Theory docs** covering detection engineering workflows and security frameworks
 
 Modern detection programs also emphasize:
 - **Detection-as-code** practices (versioning, CI validation, peer review)
@@ -89,7 +90,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Resources
 
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
-- [Elastic Security Detection Rules](https://www.elastic.co/guide/en/security/current/detection-engine-overview.html)
+- [Wazuh Documentation](https://documentation.wazuh.com/)
 - [Detection Engineering Best Practices](https://github.com/DetectionEngineering)
 
 

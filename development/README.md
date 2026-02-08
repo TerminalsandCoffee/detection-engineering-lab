@@ -8,7 +8,7 @@ Python utilities for managing detection rules lifecycle.
 |--------|---------|
 | `validation.py` | Validates TOML syntax and required fields |
 | `mitre.py` | Validates MITRE ATT&CK technique/tactic mappings |
-| `toml_to_json.py` | Uploads detections to Elastic Security API |
+| `toml_to_json.py` | Uploads detections to SIEM API (Elastic-compatible) |
 | `update_alert.py` | Updates existing rules (used in CI/CD) |
 | `toml_to_csv.py` | Exports detections to CSV for reporting |
 | `toml_to_md.py` | Generates markdown documentation |
@@ -24,7 +24,7 @@ python validation.py
 # Validate MITRE mappings
 python mitre.py
 
-# Upload to Elastic (requires ELASTIC_KEY env var)
+# Upload to SIEM (requires ELASTIC_KEY env var — legacy Elastic-compatible)
 python toml_to_json.py --dry-run  # Preview
 python toml_to_json.py            # Upload
 
@@ -35,6 +35,6 @@ python toml_to_navigator.py
 
 ## Environment Variables
 
-- `ELASTIC_KEY`: API key for Elastic Security
-- `ELASTIC_URL`: (optional) Override default Elastic endpoint
+- `ELASTIC_KEY`: API key for SIEM (legacy Elastic-compatible)
+- `ELASTIC_URL`: (optional) Override default SIEM endpoint
 - `CHANGED_FILES`: Used by `update_alert.py` in CI/CD pipelines

@@ -1,6 +1,6 @@
 # Detections
 
-TOML-formatted detection rules for Elastic Security, mapped to the MITRE ATT&CK framework.
+TOML-formatted detection rules mapped to the MITRE ATT&CK framework.
 
 ## Structure
 
