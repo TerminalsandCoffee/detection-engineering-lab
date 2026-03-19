@@ -24,10 +24,10 @@ Modern detection programs also emphasize:
 ## Repository Structure
 
 ```
-detection-engineering-lab/
 ├── detections/          # TOML-formatted detection rules
 ├── development/         # Python scripts for validation and conversion
 ├── metrics/             # Generated metrics, reports, and visualizations
+├── setup/               # Lab infrastructure (Terraform for Wazuh, Windows, Kali)
 ├── theory/              # Documentation on detection engineering concepts
 └── .github/workflows/   # GitHub Actions workflows (currently disabled)
 ```

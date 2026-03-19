@@ -22,6 +22,6 @@ name = "Automated Exfiltration"
 reference = "https://attack.mitre.org/techniques/T1020/"
 
 [rule.threat.tactic]
-id = "TA0009"
+id = "TA0010"
 name = "Exfiltration"
 reference = "https://attack.mitre.org/tactics/TA0010/"

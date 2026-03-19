@@ -36,7 +36,7 @@ for root, dirs, files in os.walk("detections/"):
                         technique = technique_id + " - " + technique_name
                         subtech = subtechnique_id + " - " + subtechnique_name
 
-                        obj = {'tactic': tactic, 'technique': technique, 'subtech': subtech, 'subtech': subtech}
+                        obj = {'tactic': tactic, 'technique': technique, 'subtech': subtech}
                         filtered_object_array.append(obj)
                 obj = {'name': name, 'date': date, 'author': author, 'risk_score': risk_score, 'severity': severity, 'mitre': filtered_object_array}
                 detections[file] = obj

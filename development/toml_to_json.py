@@ -6,7 +6,7 @@ Usage:
 
 Environment Variables:
     ELASTIC_KEY: API key for Elastic Security
-    ELASTIC_URL: (optional) Elastic Security API URL
+    ELASTIC_URL: Elastic Security API URL
 """
 import argparse
 import json
@@ -23,8 +23,6 @@ REQUIRED_FIELDS_BY_TYPE = {
     "eql": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "language", "threat"],
     "threshold": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "threshold", "threat"],
 }
-
-DEFAULT_URL = "https://detectionengineering101.kb.us-central1.gcp.cloud.es.io:9243/api/detection_engine/rules"
 
 
 def load_detection(file_path: Path) -> dict:
@@ -72,7 +70,10 @@ def main():
             print("Error: ELASTIC_KEY environment variable not set", file=sys.stderr)
             sys.exit(1)
 
-        url = os.environ.get("ELASTIC_URL", DEFAULT_URL)
+        url = os.environ.get("ELASTIC_URL")
+        if not url:
+            print("Error: ELASTIC_URL environment variable not set", file=sys.stderr)
+            sys.exit(1)
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
             "kbn-xsrf": "true",

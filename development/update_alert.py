@@ -15,8 +15,6 @@ import tomllib
 import requests
 
 
-BASE_URL = "https://detectionengineering101.kb.us-central1.gcp.cloud.es.io:9243/api/detection_engine/rules"
-
 REQUIRED_FIELDS_BY_TYPE = {
     "query": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "threat"],
     "eql": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "language", "threat"],
@@ -43,6 +41,11 @@ def main():
     api_key = os.environ.get("ELASTIC_KEY")
     if not api_key:
         print("Error: ELASTIC_KEY environment variable not set", file=sys.stderr)
+        sys.exit(1)
+
+    base_url = os.environ.get("ELASTIC_URL")
+    if not base_url:
+        print("Error: ELASTIC_URL environment variable not set", file=sys.stderr)
         sys.exit(1)
 
     changed_files = os.environ.get("CHANGED_FILES", "")
@@ -76,14 +79,14 @@ def main():
                 continue
 
             rule_id = alert["rule"]["rule_id"]
-            url = f"{BASE_URL}?rule_id={rule_id}"
+            url = f"{base_url}?rule_id={rule_id}"
 
             # Try to update first (PUT), create if not found (POST)
             response = requests.put(url, headers=headers, json=payload)
             result = response.json()
 
             if result.get("status_code") == 404:
-                response = requests.post(BASE_URL, headers=headers, json=payload)
+                response = requests.post(base_url, headers=headers, json=payload)
                 result = response.json()
                 print(f"  Created: {result.get('name', filename)}")
             else:
