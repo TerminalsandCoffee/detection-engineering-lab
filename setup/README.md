@@ -26,18 +26,23 @@ All instances are deployed into a dedicated VPC (`10.0.0.0/16`) with:
 - Internal security group allowing all lab-to-lab traffic
 - External access locked to your IP via `allowed_ip`
 
-## Deployment
+## Validation-first workflow
+
+Use these commands to validate the lab configuration without deploying infrastructure:
 
 ```bash
 cd setup/terraform
 
-# Copy and fill in your variables
+# Copy and fill in your variables for local validation only
 cp terraform.tfvars.example terraform.tfvars
 
-terraform init
-terraform plan
-terraform apply
+terraform fmt -check
+terraform init -backend=false
+terraform validate
+terraform plan -refresh=false
 ```
+
+Only run `terraform apply` when you intentionally want to deploy the lab.
 
 ## Requirements
 
