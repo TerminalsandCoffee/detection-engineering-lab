@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.5.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -223,8 +225,15 @@ resource "aws_instance" "wazuh_manager" {
   vpc_security_group_ids = [aws_security_group.wazuh.id, aws_security_group.lab_internal.id]
 
   root_block_device {
-    volume_size = 30
-    volume_type = "gp3"
+    volume_size           = 30
+    volume_type           = "gp3"
+    encrypted             = true
+    delete_on_termination = true
+  }
+
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
   }
 
   user_data = <<-EOF
@@ -246,8 +255,15 @@ resource "aws_instance" "windows_target" {
   vpc_security_group_ids = [aws_security_group.windows.id, aws_security_group.lab_internal.id]
 
   root_block_device {
-    volume_size = 50
-    volume_type = "gp3"
+    volume_size           = 50
+    volume_type           = "gp3"
+    encrypted             = true
+    delete_on_termination = true
+  }
+
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
   }
 
   user_data = <<-USERDATA
@@ -285,8 +301,15 @@ resource "aws_instance" "kali_attacker" {
   vpc_security_group_ids = [aws_security_group.kali.id, aws_security_group.lab_internal.id]
 
   root_block_device {
-    volume_size = 30
-    volume_type = "gp3"
+    volume_size           = 30
+    volume_type           = "gp3"
+    encrypted             = true
+    delete_on_termination = true
+  }
+
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
   }
 
   tags = {

@@ -7,16 +7,31 @@ variable "aws_region" {
 variable "ubuntu_ami" {
   description = "AMI ID for Ubuntu 22.04 LTS (Wazuh Manager)"
   type        = string
+
+  validation {
+    condition     = can(regex("^ami-[a-z0-9]+$", var.ubuntu_ami))
+    error_message = "ubuntu_ami must be a valid AMI ID (for example ami-0123456789abcdef0)."
+  }
 }
 
 variable "windows_ami" {
   description = "AMI ID for Windows Server 2022 (target host)"
   type        = string
+
+  validation {
+    condition     = can(regex("^ami-[a-z0-9]+$", var.windows_ami))
+    error_message = "windows_ami must be a valid AMI ID (for example ami-0123456789abcdef0)."
+  }
 }
 
 variable "kali_ami" {
   description = "AMI ID for Kali Linux (attack simulation)"
   type        = string
+
+  validation {
+    condition     = can(regex("^ami-[a-z0-9]+$", var.kali_ami))
+    error_message = "kali_ami must be a valid AMI ID (for example ami-0123456789abcdef0)."
+  }
 }
 
 variable "key_name" {
@@ -27,6 +42,11 @@ variable "key_name" {
 variable "allowed_ip" {
   description = "Your public IP in CIDR notation for access control (e.g. 203.0.113.10/32)"
   type        = string
+
+  validation {
+    condition     = can(cidrhost(var.allowed_ip, 0)) && !contains(["0.0.0.0/0", "::/0"], var.allowed_ip)
+    error_message = "allowed_ip must be a valid single-admin CIDR and must not allow global access."
+  }
 }
 
 variable "wazuh_instance_type" {
