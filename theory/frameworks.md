@@ -67,9 +67,9 @@ reference = "https://attack.mitre.org/tactics/TA0002/"
 
 This mapping enables:
 
-- **Coverage tracking** — identify which ATT&CK techniques have detections and which do not
+- **Mapping inventory** — identify which ATT&CK techniques appear in the collection; verify actual coverage with telemetry and engine tests
 - **Gap analysis** — prioritize detection development toward uncovered techniques relevant to your threat landscape
-- **Reporting** — communicate detection maturity to stakeholders using a shared vocabulary
+- **Reporting** — communicate mapped behaviors using a shared vocabulary, alongside test evidence and known gaps
 - **Validation** — automated scripts in `development/` verify that every detection has valid ATT&CK technique and tactic references
 
 ### ATT&CK Matrices

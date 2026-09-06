@@ -1,0 +1,11 @@
+{
+  "type": "bundle",
+  "description": "Minimal synthetic STIX-shaped test fixture. Not a complete or current ATT&CK catalog.",
+  "objects": [
+    {"type": "x-mitre-tactic", "id": "x-mitre-tactic--collection", "name": "Collection", "x_mitre_shortname": "collection", "external_references": [{"source_name": "mitre-attack", "external_id": "TA0009", "url": "https://attack.mitre.org/tactics/TA0009/"}]},
+    {"type": "x-mitre-tactic", "id": "x-mitre-tactic--execution", "name": "Execution", "x_mitre_shortname": "execution", "external_references": [{"source_name": "mitre-attack", "external_id": "TA0002", "url": "https://attack.mitre.org/tactics/TA0002/"}]},
+    {"type": "attack-pattern", "id": "attack-pattern--parent", "name": "Data Staged", "external_references": [{"source_name": "mitre-attack", "external_id": "T1074", "url": "https://attack.mitre.org/techniques/T1074/"}], "kill_chain_phases": [{"kill_chain_name": "mitre-attack", "phase_name": "collection"}]},
+    {"type": "attack-pattern", "id": "attack-pattern--child", "name": "Local Data Staging", "x_mitre_is_subtechnique": true, "external_references": [{"source_name": "mitre-attack", "external_id": "T1074.001", "url": "https://attack.mitre.org/techniques/T1074/001/"}], "kill_chain_phases": [{"kill_chain_name": "mitre-attack", "phase_name": "collection"}]},
+    {"type": "relationship", "relationship_type": "subtechnique-of", "source_ref": "attack-pattern--child", "target_ref": "attack-pattern--parent"}
+  ]
+}

@@ -1,4 +1,8 @@
 <!-- Custom Decoder for Detection Engineering Lab -->
 <decoder name="custom-app-decoder">
-  <prematch>^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} CustomApp: </prematch>
+  <!-- The stock decoder already consumes YYYY-MM-DD HH:MM:SS.
+       Inherit it so its earlier timestamp match does not shadow this decoder. -->
+  <parent>windows-date-format</parent>
+  <use_own_name>true</use_own_name>
+  <prematch type="pcre2" offset="after_parent">^CustomApp: </prematch>
 </decoder>

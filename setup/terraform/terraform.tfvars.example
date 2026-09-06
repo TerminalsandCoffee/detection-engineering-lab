@@ -1,6 +1,12 @@
 aws_region  = "us-east-1"
-ubuntu_ami  = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS
-windows_ami = "ami-0f9c44e98edf38a2b" # Windows Server 2022 Base
-kali_ami    = "ami-0fda60cefcfc43fc3" # Kali Linux (check AWS Marketplace)
+ubuntu_ami  = "REPLACE_WITH_UBUNTU_AMI" # Ubuntu 22.04 LTS, x86_64, selected region
+windows_ami = "REPLACE_WITH_WINDOWS_AMI" # Windows Server 2022 Base, x86_64
+kali_ami    = "REPLACE_WITH_KALI_AMI" # Official Kali AWS Marketplace image, x86_64
 key_name    = "your-key-pair-name"
 allowed_ip  = "YOUR_PUBLIC_IP/32"
+
+# Reviewed against official Wazuh docs on 2026-09-06.
+# Manager installs the latest patch from this branch; do not pick a newer agent.
+wazuh_branch        = "4.14"
+wazuh_agent_version = "4.14.7"
+wazuh_volume_size   = 50

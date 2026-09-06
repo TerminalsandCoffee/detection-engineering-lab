@@ -1,18 +1,20 @@
-name: All Detections To Elastic
+name: Preview all Elastic payloads
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  elastic-detections-all:
-    if: false
+  preview:
     runs-on: ubuntu-latest
-    env:
-      ELASTIC_KEY: ${{ secrets.ELASTIC_KEY }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          python-version: '3.11.4'
-      - run: pip install requests
-      - run: python development/toml_to_json.py
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - run: python development/toml_to_json.py --dry-run

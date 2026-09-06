@@ -1,0 +1,105 @@
+<powershell>
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+function Add-WazuhEventChannel {
+    param([string]$ConfigText, [string]$Channel)
+
+    $escapedChannel = [regex]::Escape($Channel)
+    if ($ConfigText -match "<location>\s*$escapedChannel\s*</location>") {
+        return $ConfigText
+    }
+    $closingTag = $ConfigText.LastIndexOf('</ossec_config>')
+    if ($closingTag -lt 0) {
+        throw 'Wazuh configuration has no closing ossec_config element'
+    }
+    $entry = "`n  <localfile>`n    <location>$Channel</location>`n    <log_format>eventchannel</log_format>`n  </localfile>`n"
+    return $ConfigText.Insert($closingTag, $entry)
+}
+
+function Download-LabFile {
+    param([string]$Uri, [string]$Destination)
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $Destination -TimeoutSec 120
+            return
+        } catch {
+            if ($attempt -eq 3) { throw }
+            Start-Sleep -Seconds 10
+        }
+    }
+}
+
+function Wait-WazuhEnrollment {
+    param([string]$ManagerIp)
+
+    $deadline = (Get-Date).AddMinutes(20)
+    do {
+        $connection = New-Object Net.Sockets.TcpClient
+        try {
+            if ($connection.ConnectAsync($ManagerIp, 1515).Wait(2000) -and $connection.Connected) {
+                return
+            }
+        } catch {
+            # The manager installer may still be running; retry within a fixed deadline.
+        } finally {
+            $connection.Dispose()
+        }
+        Start-Sleep -Seconds 15
+    } while ((Get-Date) -lt $deadline)
+    throw 'Wazuh enrollment port 1515 did not become ready within 20 minutes'
+}
+
+$labDir = 'C:\ProgramData\DetectionLab'
+New-Item -ItemType Directory -Path $labDir -Force | Out-Null
+Start-Transcript -Path (Join-Path $labDir 'bootstrap.log') -Append
+try {
+    $managerIp = '${manager_ip}'
+    $agentVersion = '${wazuh_agent_version}'
+    $sysmonZip = Join-Path $labDir 'Sysmon.zip'
+    $sysmonDir = Join-Path $labDir 'Sysmon'
+    $sysmonConfig = Join-Path $labDir 'sysmon-lab.xml'
+    Download-LabFile 'https://download.sysinternals.com/files/Sysmon.zip' $sysmonZip
+    Expand-Archive -Path $sysmonZip -DestinationPath $sysmonDir -Force
+    $sysmonExe = Join-Path $sysmonDir 'Sysmon64.exe'
+    $signature = Get-AuthenticodeSignature -FilePath $sysmonExe
+    if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') {
+        throw 'Sysmon did not have a valid Microsoft Authenticode signature'
+    }
+    [IO.File]::WriteAllBytes($sysmonConfig, [Convert]::FromBase64String('${sysmon_config_base64}'))
+    & $sysmonExe -accepteula -i $sysmonConfig
+    if ($LASTEXITCODE -ne 0) { throw "Sysmon install failed with exit code $LASTEXITCODE" }
+
+    $wazuhMsi = Join-Path $labDir 'wazuh-agent.msi'
+    $wazuhChecksum = Join-Path $labDir 'wazuh-agent.msi.sha512'
+    $packageName = "wazuh-agent-$agentVersion-1.msi"
+    Download-LabFile "https://packages.wazuh.com/4.x/windows/$packageName" $wazuhMsi
+    Download-LabFile "https://packages.wazuh.com/4.x/checksums/wazuh/$agentVersion/$packageName.sha512" $wazuhChecksum
+    $expectedHash = ((Get-Content -LiteralPath $wazuhChecksum -Raw).Trim() -split '\s+')[0]
+    if ($expectedHash -notmatch '^[0-9a-fA-F]{128}$' -or (Get-FileHash -LiteralPath $wazuhMsi -Algorithm SHA512).Hash -ne $expectedHash) {
+        throw 'Wazuh MSI checksum verification failed'
+    }
+    $msiLog = Join-Path $labDir 'wazuh-msi.log'
+    $arguments = @('/i', "`"$wazuhMsi`"", '/qn', '/norestart', "WAZUH_MANAGER=`"$managerIp`"", "WAZUH_REGISTRATION_SERVER=`"$managerIp`"", '/L*v', "`"$msiLog`"")
+    $installer = Start-Process -FilePath msiexec.exe -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+    if ($installer.ExitCode -notin @(0, 3010)) {
+        throw "Wazuh MSI failed with exit code $($installer.ExitCode); see $msiLog"
+    }
+    if ($installer.ExitCode -eq 3010) { Write-Warning 'Installer requested a reboot; verify the agent after rebooting.' }
+
+    $agentConfig = 'C:\Program Files (x86)\ossec-agent\ossec.conf'
+    $configText = Get-Content -LiteralPath $agentConfig -Raw
+    $configText = Add-WazuhEventChannel $configText 'Microsoft-Windows-Sysmon/Operational'
+    [IO.File]::WriteAllText($agentConfig, $configText, (New-Object Text.UTF8Encoding($false)))
+
+    Wait-WazuhEnrollment $managerIp
+    Restart-Service -Name WazuhSvc
+    (Get-Service -Name WazuhSvc).WaitForStatus('Running', [TimeSpan]::FromSeconds(30))
+    # Running service is a bootstrap signal; verify enrollment and event ingestion separately.
+    (Get-Date).ToUniversalTime().ToString('o') | Set-Content -LiteralPath (Join-Path $labDir 'windows-bootstrap-complete.txt')
+} finally {
+    Stop-Transcript
+}
+</powershell>

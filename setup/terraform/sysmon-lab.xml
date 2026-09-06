@@ -1,0 +1,10 @@
+<Sysmon schemaversion="4.82">
+  <HashAlgorithms>sha256</HashAlgorithms>
+  <EventFiltering>
+    <!-- Broad telemetry for this small, disposable lab. Tune before wider use. -->
+    <ProcessCreate onmatch="exclude" />
+    <NetworkConnect onmatch="exclude" />
+    <FileCreate onmatch="exclude" />
+    <RegistryEvent onmatch="exclude" />
+  </EventFiltering>
+</Sysmon>

@@ -103,7 +103,8 @@ Treating detections as code means they follow software engineering practices:
 
 Before a detection reaches production, it must be tested:
 
-- **Unit testing** — use the validation scripts in `development/` to confirm the rule has valid TOML syntax, all required fields are present, and MITRE mappings are correct
+- **Static validation** — use the scripts in `development/` to check TOML syntax, required fields, and ATT&CK mappings. These checks do not execute the detection query.
+- **Rule behavior tests** — run positive, benign, and edge-case events through the intended engine. Record the expected alert ID and confirm which cases must not raise it.
 - **Lab validation** — execute the adversary technique in a controlled environment and verify the detection fires. The `setup/` directory contains Terraform configurations for deploying a lab environment
 - **Emulation coverage** — run Atomic Red Team or CALDERA tests to confirm the detection covers known technique variations
 - **False positive analysis** — run the query against production data (or a representative sample) to identify benign activity that would trigger the rule. Adjust the query logic or add exclusions as needed
@@ -114,12 +115,30 @@ A detection is ready for deployment when it:
 2. Successfully fires on simulated adversary behavior
 3. Has an acceptable false positive rate
 
+### Evidence to Keep
+
+Use this outline for a test or tuning record. Store only sanitized events from an authorized lab.
+
+| Field | Record |
+|---|---|
+| Rule | Filename, rule ID, and commit |
+| Environment | Engine version, sensor configuration, and field mappings |
+| Hypothesis | Observable behavior and why it matters |
+| Input | Sanitized event or reproducible benign lab action |
+| Expected result | Alert ID for a positive case; no target-rule alert for a negative case |
+| Observed result | Engine output and event-to-alert evidence |
+| Benign comparison | Similar legitimate activity and the actual result |
+| Limitations | Missing fields, untested variations, noise, and any test-only adapters |
+| Decision | Keep, tune, investigate, or reject, with a reason |
+
+An ATT&CK Navigator cell records a mapping, not a measured detection rate. Fixture tests, metadata checks, and complete endpoint-to-alert tests establish different facts; identify which was performed.
+
 ## 5. Deployment
 
 Deploy the validated detection to the production SIEM or detection platform:
 
 - Merge the detection rule into the `main` branch through a pull request
-- CI/CD pipelines pick up the change and push the rule to the detection platform
+- Use a separately authorized deployment process to install the reviewed rule. This repository's default workflows validate changes; merging does not provision infrastructure or update a live SIEM.
 - Verify the rule is active and receiving data in production
 - Document the deployment in the detection's commit history
 
