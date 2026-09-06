@@ -5,7 +5,7 @@ set -euo pipefail
 if [[ "${1:-}" != "--inside-container" ]]; then
   repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
   image='wazuh/wazuh-manager:4.14.7@sha256:80cada6a192fcb8caa8b415a5b64e2155138dd8df1da3a7b227d7e5e4e7460c0'
-  exec docker run --rm --network none \
+  exec docker run --rm --network none --ulimit nofile=655360:655360 \
     --mount "type=bind,source=${repo_root},target=/work,readonly" \
     --entrypoint /bin/bash "$image" /work/tests/wazuh_logtest.sh --inside-container
 fi
@@ -20,6 +20,9 @@ fi
 # service entrypoint (which would also start collectors and other components).
 cp -a /var/ossec/data_tmp/permanent/. /
 cp -a /var/ossec/data_tmp/exclusion/. /
+# Match the official image's initialization permissions so analysisd can rebuild
+# the packaged CDB lists when their source files are newer than the databases.
+chown -R wazuh:wazuh /var/ossec/etc/lists /var/ossec/queue/rids
 cp /work/detections/wazuh-rules/powershell_exec_via_bat.xml /var/ossec/etc/rules/
 cp /work/detections/decoders/local_decoder.xml /var/ossec/etc/decoders/
 chown root:wazuh /var/ossec/etc/rules/powershell_exec_via_bat.xml /var/ossec/etc/decoders/local_decoder.xml
@@ -57,7 +60,15 @@ ET.SubElement(rulesets[0], 'rule_include').text = 'etc/rules/powershell_exec_via
 config_path.write_text('\n'.join(ET.tostring(element, encoding='unicode') for element in wrapped))
 PY
 
-/var/ossec/bin/wazuh-analysisd -t
+/var/ossec/bin/wazuh-analysisd -t > /tmp/wazuh-config-check.log 2>&1 || {
+  cat /tmp/wazuh-config-check.log >&2
+  exit 1
+}
+cat /tmp/wazuh-config-check.log
+# Some initialization errors do not produce a nonzero exit code in Wazuh.
+if grep -Eq 'ERROR:|CRITICAL:' /tmp/wazuh-config-check.log; then
+  exit 1
+fi
 # Only the analysis engine and its local database run. No agents, API, active
 # response, inventory or scanner service starts; the container has no network.
 /var/ossec/bin/wazuh-db -f > /tmp/wazuh-db.log 2>&1 &
