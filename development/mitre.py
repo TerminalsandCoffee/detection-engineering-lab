@@ -1,117 +1,102 @@
-import requests
-import tomllib
-import os
+"""Validate every TOML ATT&CK mapping against an official catalog or local snapshot."""
+
+import argparse
+import json
+from pathlib import Path
 import sys
 
-url = "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json"
-headers = {
-    'accept': 'application/json'
-}
+from _common import add_detections_argument, load_detections, mappings
 
-mitreData = requests.get(url, headers=headers).json()
-mitreMapped = {}
-failure = 0
+ATTACK_URL = "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json"
 
-for object in mitreData['objects']:
-    tactics = []
-    if object['type'] == 'attack-pattern':
-        if 'external_references' in object:
-            for reference in object['external_references']:
-                if 'external_id' in reference:
-                    if ((reference['external_id'].startswith("T"))):
-                        if 'kill_chain_phases' in object:
-                            for tactic in object['kill_chain_phases']:
-                                tactics.append(tactic['phase_name'])
-                        technique = reference['external_id']
-                        name = object['name']
-                        url = reference['url']
 
-                        if 'x_mitre_deprecated' in object:
-                            deprecated = object['x_mitre_deprecated']
-                            filtered_object = {'tactics': str(tactics), 'technique': technique, 'name': name, 'url': url, 'deprecated': deprecated}
-                            mitreMapped[technique] = filtered_object
-                        else:
-                            filtered_object = {'tactics': str(tactics), 'technique': technique, 'name': name, 'url': url, 'deprecated': "False"}
-                            mitreMapped[technique] = filtered_object
+def load_attack_data(path=None):
+    if path is not None:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    import requests
+    try:
+        response = requests.get(ATTACK_URL, headers={"Accept": "application/json"}, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as exc:
+        raise ValueError(f"Unable to load ATT&CK catalog: {exc}") from exc
 
-alert_data = {}
 
-for root, dirs, files in os.walk("detections/"):
-    for file in files:
-        if file.endswith(".toml"):
-            full_path = os.path.join(root, file)
-            with open(full_path,"rb") as toml:
-                alert = tomllib.load(toml)
-                filtered_object_array = []
+def catalog_index(data):
+    if not isinstance(data, dict) or not isinstance(data.get("objects"), list):
+        raise ValueError("ATT&CK catalog must contain a STIX objects list")
+    by_id, parents = {}, set()
+    for item in data["objects"]:
+        if not isinstance(item, dict):
+            raise ValueError("ATT&CK catalog objects must be JSON objects")
+        if item.get("type") in ("attack-pattern", "x-mitre-tactic"):
+            for reference in item.get("external_references", []):
+                if reference.get("source_name") == "mitre-attack" and reference.get("external_id"):
+                    by_id[reference["external_id"]] = item
+        if item.get("type") == "relationship" and item.get("relationship_type") == "subtechnique-of" and not item.get("revoked") and not item.get("x_mitre_deprecated"):
+            parents.add((item.get("source_ref"), item.get("target_ref")))
+    if not any(item.get("type") == "x-mitre-tactic" for item in by_id.values()) or not any(item.get("type") == "attack-pattern" for item in by_id.values()):
+        raise ValueError("ATT&CK catalog must contain tactics and techniques")
+    return by_id, parents
 
-                if alert['rule']['threat'][0]['framework'] == "MITRE ATT&CK":
-                    for threat in alert['rule']['threat']:
-                        technique_id = threat['technique'][0]['id']
-                        technique_name = threat['technique'][0]['name']
 
-                        if 'tactic' in threat:
-                            tactic = threat['tactic']['name']
-                        else:
-                            tactic = "none"
+def mapping_errors(rule, by_id, parents):
+    errors = []
 
-                        if 'subtechnique' in threat['technique'][0]:
-                            subtechnique_id = threat['technique'][0]['subtechnique'][0]['id']
-                            subtechnique_name = threat['technique'][0]['subtechnique'][0]['name']
-                        else:
-                            subtechnique_id = "none"
-                            subtechnique_name = "none"
-                        
-                        filtered_object = {'tactic': tactic, 'technique_id': technique_id, "technique_name": technique_name, "subtechnique_id": subtechnique_id, "subtechnique_name": subtechnique_name}
-                        filtered_object_array.append(filtered_object)
-                        alert_data[file] = filtered_object_array
+    def check_entry(entry, expected_type):
+        identifier = entry["id"]
+        official = by_id.get(identifier)
+        if not official or official.get("type") != expected_type:
+            errors.append(f"Unknown ATT&CK identifier: {identifier}")
+            return None
+        if official.get("revoked") or official.get("x_mitre_deprecated"):
+            errors.append(f"Revoked or deprecated ATT&CK identifier: {identifier}")
+        if entry["name"] != official.get("name"):
+            errors.append(f"{identifier} name mismatch: expected {official.get('name')!r}, got {entry['name']!r}")
+        return official
 
-mitre_tactic_list = ['none','reconnaissance','resource development','initial access','execution','persistence','privilege escalation','defense evasion','credential access','discovery','lateral movement','collection','command and control','exfiltration','impact']
+    for tactic, technique, child in mappings(rule):
+        official_tactic = check_entry(tactic, "x-mitre-tactic")
+        official_technique = check_entry(technique, "attack-pattern")
+        if official_technique and official_technique.get("x_mitre_is_subtechnique"):
+            errors.append(f"{technique['id']} is a subtechnique, not a parent technique")
+        entries = [(technique, official_technique)]
+        if child:
+            official_child = check_entry(child, "attack-pattern")
+            entries.append((child, official_child))
+            if official_child and (not official_child.get("x_mitre_is_subtechnique") or not official_technique or (official_child.get("id"), official_technique.get("id")) not in parents):
+                errors.append(f"{child['id']} is not a catalog subtechnique of {technique['id']}")
+        if official_tactic:
+            shortname = official_tactic.get("x_mitre_shortname")
+            for entry, official in entries:
+                if official:
+                    phases = {phase.get("phase_name") for phase in official.get("kill_chain_phases", []) if phase.get("kill_chain_name") == "mitre-attack"}
+                    if shortname not in phases:
+                        errors.append(f"{entry['id']} is not mapped to tactic {tactic['id']} ({tactic['name']})")
+    return list(dict.fromkeys(errors))
 
-for file in alert_data:
-    for line in alert_data[file]:
-        tactic=line['tactic'].lower()
-        technique_id=line['technique_id']
-        subtechnique_id = line['subtechnique_id']
 
-        # Check to ensure MITRE Tactic exists
-        if tactic not in mitre_tactic_list:
-            print("The MITRE Tactic supplied does not exist: " + "\"" + tactic + "\"" + " in " + file)
-            failure = 1
-       # Check to make sure the MITRE Technique ID is valid
-        try:
-            if mitreMapped[technique_id]:
-                pass
-        except KeyError:
-            print("Invalid MITRE Technique ID: " + "\"" + technique_id + "\"" + " in " + file)
-            failure = 1
-       # Check to see if the MITRE TID + Name combination is Valid
-        try:
-            mitre_name = mitreMapped[technique_id]['name']
-            alert_name = line['technique_name']
-            if alert_name != mitre_name:
-                print("MITRE Technique ID and Name Mismatch in " + file + " EXPECTED: " + "\"" + mitre_name + "\"" + " GIVEN: " + "\"" + alert_name + "\"")
-                failure = 1
-        except KeyError:
-            pass
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_detections_argument(parser)
+    parser.add_argument("--attack-data", type=Path, help="Use a local enterprise ATT&CK STIX JSON snapshot without network access")
+    args = parser.parse_args(argv)
+    try:
+        detections = load_detections(args.detections_dir)
+        by_id, parents = catalog_index(load_attack_data(args.attack_data))
+    except (ValueError, OSError) as exc:
+        print(f"ATT&CK validation failed: {exc}", file=sys.stderr)
+        return 1
+    failures = 0
+    for path, alert in detections:
+        errors = mapping_errors(alert["rule"], by_id, parents)
+        for error in errors:
+            print(f"{path}: {error}", file=sys.stderr)
+        failures += bool(errors)
+    source = args.attack_data or ATTACK_URL
+    print(f"Checked {len(detections)} TOML rules against {source}; files with mapping errors: {failures}.")
+    return 1 if failures else 0
 
-       # Check to see if the subTID + Name Entry is Valid
-        try:
-            if subtechnique_id != "none":
-                mitre_name = mitreMapped[subtechnique_id]['name']
-                alert_name = line['subtechnique_name']
-                if alert_name != mitre_name:
-                    print("MITRE Sub-Technique ID and Name Mismatch in " + file + " EXPECTED: " + "\"" + mitre_name + "\"" + " GIVEN: " + "\"" + alert_name + "\"")
-                    failure = 1
-        except KeyError:
-            pass
 
-       # Check to see if the technique is deprecated
-        try:
-            if mitreMapped[technique_id]['deprecated'] == True:
-                 print("Deprecated MITRE Technique ID: " + "\"" + technique_id + "\"" + " in " + file)
-                 failure = 1
-        except KeyError:
-            pass
-
-if failure != 0:
-    sys.exit(1)
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,98 +1,82 @@
-"""
-Update changed TOML detection rules in Elastic Security.
+"""Update CHANGED_FILES in Elastic; --dry-run previews without credentials or HTTP."""
 
-This script is designed to run in CI/CD when detection files change.
-It attempts to PUT (update) first, and falls back to POST (create) if the rule doesn't exist.
-
-Environment Variables:
-    ELASTIC_KEY: API key for Elastic Security
-    CHANGED_FILES: Space or comma-separated list of changed filenames
-"""
+import argparse
+import json
 import os
+from pathlib import Path
+import re
 import sys
-import tomllib
 
 import requests
 
-
-REQUIRED_FIELDS_BY_TYPE = {
-    "query": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "threat"],
-    "eql": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "language", "threat"],
-    "threshold": ["author", "description", "name", "rule_id", "risk_score", "severity", "type", "query", "threshold", "threat"],
-}
+from _common import ROOT, add_detections_argument, build_payload, load_detections
+from toml_to_json import REQUEST_TIMEOUT, api_configuration, response_result, upload_detection
 
 
-def build_payload(alert: dict) -> dict | None:
-    """Build the JSON payload for Elastic Security API."""
-    rule = alert.get("rule", {})
-    rule_type = rule.get("type")
+def select_changed(detections, text, directory):
+    # Keep the original space/comma-separated format; JSON arrays support spaces.
+    tokens = json.loads(text) if text.lstrip().startswith("[") else re.split(r"[\s,]+", text.strip())
+    if not isinstance(tokens, list) or not all(isinstance(token, str) for token in tokens):
+        raise ValueError("CHANGED_FILES must contain paths, or a JSON array of paths")
+    selected = set()
+    for token in tokens:
+        token = token.replace("\\", "/")
+        if not token.endswith(".toml"):
+            continue
+        matching = []
+        for path, _ in detections:
+            names = {path.as_posix(), path.relative_to(Path(directory)).as_posix()}
+            if path.is_relative_to(ROOT):
+                names.add(path.relative_to(ROOT).as_posix())
+            if "/" not in token:
+                names.add(path.name)  # Legacy basename support, only if unambiguous.
+            if token.removeprefix("./") in names:
+                matching.append(path)
+        if len(matching) != 1:
+            raise ValueError(f"Changed TOML path is missing or ambiguous: {token}")
+        selected.add(matching[0])
+    return [(path, alert) for path, alert in detections if path in selected]
 
-    if rule_type not in REQUIRED_FIELDS_BY_TYPE:
-        return None
 
-    required_fields = REQUIRED_FIELDS_BY_TYPE[rule_type]
-    payload = {field: rule[field] for field in required_fields if field in rule}
-    payload["enabled"] = True
-
-    return payload
-
-
-def main():
-    api_key = os.environ.get("ELASTIC_KEY")
-    if not api_key:
-        print("Error: ELASTIC_KEY environment variable not set", file=sys.stderr)
-        sys.exit(1)
-
-    base_url = os.environ.get("ELASTIC_URL")
-    if not base_url:
-        print("Error: ELASTIC_URL environment variable not set", file=sys.stderr)
-        sys.exit(1)
-
-    changed_files = os.environ.get("CHANGED_FILES", "")
-    if not changed_files:
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-run", action="store_true", help="Preview selected payloads without uploading")
+    add_detections_argument(parser)
+    args = parser.parse_args(argv)
+    changed = os.environ.get("CHANGED_FILES", "").strip()
+    if not changed:
         print("No changed files specified")
-        sys.exit(0)
-
-    headers = {
-        "Content-Type": "application/json;charset=UTF-8",
-        "kbn-xsrf": "true",
-        "Authorization": f"ApiKey {api_key}",
-    }
-
-    for root, dirs, files in os.walk("detections/"):
-        for filename in files:
-            if filename not in changed_files:
-                continue
-            if not filename.endswith(".toml"):
-                continue
-
-            full_path = os.path.join(root, filename)
-            print(f"Processing: {full_path}")
-
-            with open(full_path, "rb") as f:
-                alert = tomllib.load(f)
-
-            payload = build_payload(alert)
-            if payload is None:
-                rule_type = alert.get("rule", {}).get("type", "unknown")
-                print(f"  Skipped: Unsupported rule type '{rule_type}'")
-                continue
-
-            rule_id = alert["rule"]["rule_id"]
-            url = f"{base_url}?rule_id={rule_id}"
-
-            # Try to update first (PUT), create if not found (POST)
-            response = requests.put(url, headers=headers, json=payload)
-            result = response.json()
-
-            if result.get("status_code") == 404:
-                response = requests.post(base_url, headers=headers, json=payload)
-                result = response.json()
-                print(f"  Created: {result.get('name', filename)}")
+        return 0
+    try:
+        directory = args.detections_dir.resolve()
+        detections = select_changed(load_detections(directory), changed, directory)
+        if not args.dry_run and detections:
+            url, headers = api_configuration()
+    except (ValueError, OSError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    failures = 0
+    for path, alert in detections:
+        print(f"Processing: {path}")
+        payload = build_payload(alert)
+        if args.dry_run:
+            print(f"  Payload: {json.dumps(payload, indent=2)}")
+            continue
+        try:
+            response = requests.put(url, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
+            if response.status_code == 404:
+                result = upload_detection(url, headers, payload)
+                action = "Created"
             else:
-                print(f"  Updated: {result.get('name', filename)}")
+                result = response_result(response)
+                action = "Updated"
+            print(f"  {action}: {result.get('name', path.name)} ({result['id']})")
+        except (requests.RequestException, ValueError) as exc:
+            print(f"  Error updating {path.name}: {exc}", file=sys.stderr)
+            failures += 1
+    print(f"Processed {len(detections)} changed TOML rules; failures: {failures}.")
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
-    main()
-
+    sys.exit(main())

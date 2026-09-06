@@ -1,0 +1,548 @@
+[
+  {
+    "name": "unquoted_batch",
+    "match": true,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "quoted_batch_path_with_spaces",
+    "match": true,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /d /s /c \"\"C:\\Lab Scripts\\healthcheck.bat\" status\"",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "case_insensitive_executables_and_extension",
+    "match": true,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\POWERSHELL.EXE",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\CMD.EXE",
+          "parentCommandLine": "CMD.EXE /C C:\\Lab\\HEALTHCHECK.BAT",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "batch_followed_by_command_separator",
+    "match": true,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat&echo synthetic",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "bare_executable_names",
+    "match": true,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "escaped_quoted_batch_in_windows_eventdata",
+    "match": true,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c \\\"C:\\\\Lab\\\\healthcheck.bat\\\"",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "ordinary_interactive_powershell",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\explorer.exe",
+          "parentCommandLine": "C:\\Windows\\Explorer.EXE",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "powershell_from_cmd_without_batch",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "child_basename_prefix_lookalike",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Lab\\notpowershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "child_executable_suffix_lookalike",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Lab\\powershell.exe.backup",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "child_extension_wildcard_lookalike",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Lab\\powershellXexe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "parent_basename_prefix_lookalike",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Lab\\notcmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "parent_executable_suffix_lookalike",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Lab\\cmd.exe.backup",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "parent_extension_wildcard_lookalike",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Lab\\cmdXexe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "bat_inside_longer_extension",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.batch",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "bat_backup_suffix",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat.txt",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "bat_directory_name",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab.bat\\healthcheck.cmd",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "missing_parent_command_line",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "missing_child_image",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    }
+  },
+  {
+    "name": "network_event_is_not_process_creation",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "3",
+          "version": "5",
+          "level": "4",
+          "channel": "Microsoft-Windows-Sysmon/Operational",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    },
+    "native_only": true
+  },
+  {
+    "name": "unrelated_windows_channel",
+    "match": false,
+    "event": {
+      "win": {
+        "system": {
+          "providerName": "Microsoft-Windows-Sysmon",
+          "eventID": "1",
+          "version": "5",
+          "level": "4",
+          "channel": "Application",
+          "computer": "SYNTHETIC-LAB",
+          "severityValue": "INFORMATION",
+          "systemTime": "2026-09-06T12:00:00.0000000Z"
+        },
+        "eventdata": {
+          "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "commandLine": "powershell.exe -NoProfile -Command \"Write-Output synthetic-lab\"",
+          "parentImage": "C:\\Windows\\System32\\cmd.exe",
+          "parentCommandLine": "cmd.exe /c C:\\Lab\\healthcheck.bat",
+          "user": "SYNTHETIC-LAB\\labuser",
+          "description": "Synthetic fixture; no process is executed"
+        }
+      }
+    },
+    "native_only": true
+  }
+]

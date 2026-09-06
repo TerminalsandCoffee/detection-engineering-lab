@@ -9,7 +9,7 @@ variable "ubuntu_ami" {
   type        = string
 
   validation {
-    condition     = can(regex("^ami-[a-z0-9]+$", var.ubuntu_ami))
+    condition     = can(regex("^ami-([0-9a-f]{8}|[0-9a-f]{17})$", var.ubuntu_ami))
     error_message = "ubuntu_ami must be a valid AMI ID (for example ami-0123456789abcdef0)."
   }
 }
@@ -19,7 +19,7 @@ variable "windows_ami" {
   type        = string
 
   validation {
-    condition     = can(regex("^ami-[a-z0-9]+$", var.windows_ami))
+    condition     = can(regex("^ami-([0-9a-f]{8}|[0-9a-f]{17})$", var.windows_ami))
     error_message = "windows_ami must be a valid AMI ID (for example ami-0123456789abcdef0)."
   }
 }
@@ -29,7 +29,7 @@ variable "kali_ami" {
   type        = string
 
   validation {
-    condition     = can(regex("^ami-[a-z0-9]+$", var.kali_ami))
+    condition     = can(regex("^ami-([0-9a-f]{8}|[0-9a-f]{17})$", var.kali_ami))
     error_message = "kali_ami must be a valid AMI ID (for example ami-0123456789abcdef0)."
   }
 }
@@ -44,8 +44,8 @@ variable "allowed_ip" {
   type        = string
 
   validation {
-    condition     = can(cidrhost(var.allowed_ip, 0)) && !contains(["0.0.0.0/0", "::/0"], var.allowed_ip)
-    error_message = "allowed_ip must be a valid single-admin CIDR and must not allow global access."
+    condition     = can(cidrnetmask(var.allowed_ip)) && can(regex("/32$", var.allowed_ip))
+    error_message = "allowed_ip must be one valid IPv4 address with /32; IPv6 and wider networks are not supported."
   }
 }
 
@@ -65,4 +65,37 @@ variable "kali_instance_type" {
   description = "Instance type for the Kali Linux instance"
   type        = string
   default     = "t2.medium"
+}
+
+variable "wazuh_branch" {
+  description = "Wazuh installation-assistant branch; check the official quickstart before changing"
+  type        = string
+  default     = "4.14"
+
+  validation {
+    condition     = can(regex("^4\\.[0-9]+$", var.wazuh_branch))
+    error_message = "wazuh_branch must be a 4.x release branch, such as 4.14."
+  }
+}
+
+variable "wazuh_agent_version" {
+  description = "Exact Windows Wazuh agent version (MSI revision 1); keep within the manager branch"
+  type        = string
+  default     = "4.14.7"
+
+  validation {
+    condition     = can(regex("^4\\.[0-9]+\\.[0-9]+$", var.wazuh_agent_version))
+    error_message = "wazuh_agent_version must be a 4.x.y version, such as 4.14.7."
+  }
+}
+
+variable "wazuh_volume_size" {
+  description = "Wazuh root volume in GiB; quickstart recommends at least 50 GB for 1-25 agents"
+  type        = number
+  default     = 50
+
+  validation {
+    condition     = var.wazuh_volume_size >= 50 && var.wazuh_volume_size == floor(var.wazuh_volume_size)
+    error_message = "wazuh_volume_size must be a whole number of GiB of at least 50."
+  }
 }

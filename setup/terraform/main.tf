@@ -66,7 +66,7 @@ resource "aws_route_table_association" "lab" {
 
 resource "aws_security_group" "wazuh" {
   name        = "wazuh-manager-sg"
-  description = "Wazuh Manager - dashboard, API, and agent enrollment"
+  description = "Wazuh Manager - administrator SSH/dashboard and target agent connections"
   vpc_id      = aws_vpc.lab.id
 
   # SSH
@@ -87,22 +87,13 @@ resource "aws_security_group" "wazuh" {
     cidr_blocks = [var.allowed_ip]
   }
 
-  # Wazuh agent registration
+  # Agents initiate connections to the manager; restrict them to the target role.
   ingress {
-    description = "Wazuh agent enrollment"
-    from_port   = 1514
-    to_port     = 1515
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.lab.cidr_block]
-  }
-
-  # Wazuh API
-  ingress {
-    description = "Wazuh API"
-    from_port   = 55000
-    to_port     = 55000
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_ip]
+    description     = "Wazuh agent communication and enrollment from Windows target"
+    from_port       = 1514
+    to_port         = 1515
+    protocol        = "tcp"
+    security_groups = [aws_security_group.windows.id]
   }
 
   egress {
@@ -129,24 +120,6 @@ resource "aws_security_group" "windows" {
     to_port     = 3389
     protocol    = "tcp"
     cidr_blocks = [var.allowed_ip]
-  }
-
-  # WinRM (for remote management)
-  ingress {
-    description = "WinRM HTTPS"
-    from_port   = 5986
-    to_port     = 5986
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_ip]
-  }
-
-  # Allow Wazuh manager to reach the agent
-  ingress {
-    description = "Wazuh agent communication"
-    from_port   = 1514
-    to_port     = 1515
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.lab.cidr_block]
   }
 
   egress {
@@ -188,15 +161,15 @@ resource "aws_security_group" "kali" {
 }
 
 # --- Lab internal traffic ---
-# Allow all traffic between lab instances for attack simulation
+# Allow traffic between Kali and Windows for attack simulation, not to the SIEM.
 
 resource "aws_security_group" "lab_internal" {
   name        = "lab-internal-sg"
-  description = "Allow all traffic between lab instances"
+  description = "Allow attack traffic between Kali and Windows only"
   vpc_id      = aws_vpc.lab.id
 
   ingress {
-    description = "All internal lab traffic"
+    description = "Traffic between attack and target hosts"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -222,10 +195,10 @@ resource "aws_instance" "wazuh_manager" {
   instance_type          = var.wazuh_instance_type
   key_name               = var.key_name
   subnet_id              = aws_subnet.lab.id
-  vpc_security_group_ids = [aws_security_group.wazuh.id, aws_security_group.lab_internal.id]
+  vpc_security_group_ids = [aws_security_group.wazuh.id]
 
   root_block_device {
-    volume_size           = 30
+    volume_size           = var.wazuh_volume_size
     volume_type           = "gp3"
     encrypted             = true
     delete_on_termination = true
@@ -236,10 +209,13 @@ resource "aws_instance" "wazuh_manager" {
     http_tokens   = "required"
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              curl -sO https://packages.wazuh.com/4.9/wazuh-install.sh && sudo bash ./wazuh-install.sh -a
-              EOF
+  user_data = templatefile("${path.module}/scripts/install-wazuh.sh.tftpl", {
+    wazuh_branch = var.wazuh_branch
+  })
+  # EC2 user data runs on first boot; replacement makes bootstrap changes explicit.
+  user_data_replace_on_change = true
+
+  depends_on = [aws_route_table_association.lab]
 
   tags = {
     Name = "Wazuh Manager"
@@ -266,26 +242,22 @@ resource "aws_instance" "windows_target" {
     http_tokens   = "required"
   }
 
-  user_data = <<-USERDATA
-              <powershell>
-              # Install Sysmon
-              $sysmonUrl = "https://download.sysinternals.com/files/Sysmon.zip"
-              $sysmonZip = "C:\Windows\Temp\Sysmon.zip"
-              $sysmonDir = "C:\Windows\Temp\Sysmon"
-              Invoke-WebRequest -Uri $sysmonUrl -OutFile $sysmonZip
-              Expand-Archive -Path $sysmonZip -DestinationPath $sysmonDir -Force
-              & "$sysmonDir\Sysmon64.exe" -accepteula -i
+  user_data = templatefile("${path.module}/scripts/install-windows.ps1.tftpl", {
+    manager_ip           = aws_instance.wazuh_manager.private_ip
+    wazuh_agent_version  = var.wazuh_agent_version
+    sysmon_config_base64 = filebase64("${path.module}/sysmon-lab.xml")
+  })
+  user_data_replace_on_change = true
 
-              # Install Wazuh agent and enroll with manager
-              $wazuhUrl = "https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.0-1.msi"
-              $wazuhMsi = "C:\Windows\Temp\wazuh-agent.msi"
-              Invoke-WebRequest -Uri $wazuhUrl -OutFile $wazuhMsi
-              Start-Process msiexec.exe -ArgumentList "/i $wazuhMsi /q WAZUH_MANAGER='${aws_instance.wazuh_manager.private_ip}'" -Wait
-              Start-Service WazuhSvc
-              </powershell>
-              USERDATA
-
+  # Resource ordering alone does not wait for the manager's installer to finish.
   depends_on = [aws_instance.wazuh_manager]
+
+  lifecycle {
+    precondition {
+      condition     = startswith(var.wazuh_agent_version, "${var.wazuh_branch}.")
+      error_message = "Use a Windows agent version from the selected Wazuh manager branch."
+    }
+  }
 
   tags = {
     Name = "Windows Target"

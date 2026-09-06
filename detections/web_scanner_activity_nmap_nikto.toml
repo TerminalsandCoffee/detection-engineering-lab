@@ -1,17 +1,19 @@
 [metadata]
 creation_date = "2023/06/11"
+updated_date = "2026/09/06"
 
 [rule]
 author = ["Anthony Isherwood"]
-description = "Detects Nmap and Nikto User Agent strings."
+description = "Detects Nmap or Nikto user-agent strings within Zeek HTTP events. Approved scanners and spoofed user agents can match; this is a discovery signal, not proof of compromise."
 from = "now-6m"
 name = "Web Scanner Activity - Nmap and Nikto"
 risk_score = 25
 severity = "low"
 type = "query"
+language = "kuery"
 rule_id = "00000000-0000-0000-0000-000000000010"
 query = '''
-event.dataset : zeek.http and user_agent.original: *Nmap* or user_agent.original: *Nikto*
+event.dataset : zeek.http and (user_agent.original : *Nmap* or user_agent.original : *Nikto*)
 '''
 
 [[rule.threat]]

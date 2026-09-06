@@ -1,0 +1,5 @@
+* text=auto
+
+# Bootstrap templates and container scripts must keep Unix line endings on Windows.
+*.sh text eol=lf
+*.tftpl text eol=lf
